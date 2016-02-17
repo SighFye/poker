@@ -27,7 +27,7 @@ namespace Poker
         /// Private variables for this instance only
         /// </summary>
         private int suit;
-        private int value;
+        private int cardValue;
 
         /// <summary>
         /// Creates a new card with the given suit and value
@@ -37,7 +37,7 @@ namespace Poker
         internal Card(int newSuit, int newValue)
         {
             suit = newSuit;
-            value = newValue;
+            cardValue = newValue;
         }
         //======================================================================================================
         //==NO SETTER FOR SUIT OR VALUE AS ONCE THEY ARE SET ON CREATING THE CARD THEY SHOULD NOT BE CHANGED. ==
@@ -56,7 +56,7 @@ namespace Poker
         /// <returns>Returns the card value</returns>
         public int getValue()
         {
-            return value;
+            return cardValue;
         }
         /// <summary>
         /// Overrides the toString method to combined the value and suit as a string
@@ -66,7 +66,7 @@ namespace Poker
         {
             string result = "";
             //Translate the value
-            switch (value)
+            switch (cardValue)
             {
                 case _ACE:
                     result += "Ace";
@@ -81,7 +81,7 @@ namespace Poker
                     result += "Jack";
                     break;
                 default:
-                    result += value;
+                    result += cardValue;
                     break;
             }
             //Translate the suit
