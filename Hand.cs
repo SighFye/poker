@@ -53,7 +53,7 @@ namespace Poker
             //First Check the length of the hand.
             if (cards.Count < maxCards)
             {
-                Console.WriteLine("Hand Says: Card Added");
+                Console.WriteLine("Hand Says: "+newCard+" Added");
                 cards.Add(newCard); //Add the new card to the cards array using the length as an index.
                 result = true; //The result turns to true as the add card worked.
             }
@@ -69,35 +69,45 @@ namespace Poker
         /// </summary>
         private void analyseHand()
         {
-            
-            if (cards.Count > 4)
+            //Check for a flush
+            if (hasFlush(cards))
             {
-                //Check for a flush
-                if (hasFlush(cards))
+                //Check for straight flush
+                if (hasStraight(bestHand)) //Check for a straight using the flush cards.
                 {
-                    Console.WriteLine("Has Flush Checking For Straight");
-                    if (hasStraight(bestHand)) //Check for a straight using the flush cards.
+                    bestHand.Sort((a, b) => { return a.getValue().CompareTo(b.getValue()); }); //Sort the besthand based on card value
+                    bestHand = bestHand.GetRange(bestHand.Count - 5, 5); //We can do a simple getRange because only cards of the same suit are in the bestHand.
+                    //Check for Royal flush
+                    if (bestHand[bestHand.Count - 1].getValue() == Card._ACE && bestHand[bestHand.Count - 2].getValue() == Card._KING) //Are the top two cards the Ace and the King
                     {
-
+                        Console.WriteLine("Player has royal flush!");
                     }
                     else
                     {
-                        Console.WriteLine("Player has a flush");
-                        bestHand.Sort((a, b) => { return a.getValue().CompareTo(b.getValue()); }); //Sort the besthand based on card value
-                        //Get the highest value cards from the flush cards.
-                        //The reason I use bestHand.Count - 5 is this will give me the index 5 cards from the end of the list getting me the top 5 valued cards.
-                        bestHand = bestHand.GetRange(bestHand.Count - 5, 5);
-                        Console.WriteLine("Done");
+                        Console.WriteLine("Player has straight flush!");
                     }
+
                 }
                 else
                 {
-                    Console.WriteLine("No Flush Checking For Straight");
-                    if (hasStraight(cards)) //Check for a straight using all the cards
-                    {
-                        Console.WriteLine("Has Straight");
-                    }
-                        
+                    Console.WriteLine("Player has a flush");
+                    bestHand.Sort((a, b) => { return a.getValue().CompareTo(b.getValue()); }); //Sort the besthand based on card value
+                    //Get the highest value cards from the flush cards.
+                    //The reason I use bestHand.Count - 5 is this will give me the index 5 cards from the end of the list getting me the top 5 valued cards.
+                    bestHand = bestHand.GetRange(bestHand.Count - 5, 5);
+                }
+            }
+            else
+            {
+                //Check For Straight
+                if (hasStraight(cards)) //Check for a straight using all the cards
+                {
+                    Console.WriteLine("Has Straight");
+                }
+                else
+                {
+                    //Now we group the cards to find 4 of a kind, full house, 3 of a kind and pairs.
+                    List<List<List<Card>>> groupedCards = groupCards(); //<-- My first legitimate 3 diamention array :D
                 }
             }
         }
@@ -185,6 +195,98 @@ namespace Poker
             }
             else
                 return false;
+        }
+        /// <summary>
+        /// This method loop through all the cards and places references to each card is arrays is the match a pair, 3 of kind or 4 of kind
+        /// </summary>
+        /// <returns></returns>
+        private List<List<List<Card>>> groupCards()
+        {
+            if (cards.Count > 1)
+            {
+                //Create the multidiamention list to hold the grouped cards
+                List<List<List<Card>>> groupedCards = new List<List<List<Card>>>(3);
+                Card lastCard = null;
+                //How many pairs are possible
+                int temp = (int)Math.Floor((float)(cards.Count / 2));
+                groupedCards.Add(new List<List<Card>>(temp));
+                //How many three of a kind are possible
+                temp = (int)Math.Floor((float)(cards.Count / 3));
+                groupedCards.Add(new List<List<Card>>(temp));
+                //How many four of a kind are possible
+                temp = (int)Math.Floor((float)(cards.Count / 4));
+                groupedCards.Add(new List<List<Card>>(temp));
+                
+                List<Card> tempPair = new List<Card>(2);
+                List<Card> temp3Kind = new List<Card>(3);
+                List<Card> temp4Kind = new List<Card>(4);
+                //Now loop through the cards and start sorting
+                foreach (Card aCard in cards)
+                {
+                    //Temp Group Holders
+                    
+                    if (lastCard == null)
+                    {
+                        lastCard = aCard;
+                    }
+                    else
+                    {
+                        //If the last card and this card are of the same value then add it to the groups
+                        if (lastCard.getValue() == aCard.getValue())
+                        {
+                            tempPair.Add(aCard);
+                            tempPair.Add(lastCard);
+
+                            if (temp3Kind.Count == 0)
+                            {
+                                temp3Kind.Add(aCard);
+                                temp3Kind.Add(lastCard);
+                            }
+                            else
+                                temp3Kind.Add(aCard);
+
+                            if (temp4Kind.Count == 0)
+                            {
+                                temp4Kind.Add(aCard);
+                                temp4Kind.Add(lastCard);
+                            }
+                            else
+                                temp4Kind.Add(aCard);
+                            
+                            //If any of the groups are full add it to the appropriate List
+                            if (tempPair.Count == 2) //Do we already have a pair?
+                            {
+                                int pairsFound = groupedCards[0].Count;
+                                groupedCards[0].Add(tempPair.ToList()); //Make sure to create a copy of the temp list so the data is not lost
+                                tempPair.Clear();
+                            }
+                            if (temp3Kind.Count == 3) //Do we already have 3 of a kind
+                            {
+                                int threesFound = groupedCards[1].Count;
+                                groupedCards[1].Add(temp3Kind.ToList());
+                                temp3Kind.Clear();
+                            }
+                            if (temp4Kind.Count == 4) //Do we already have 4 of a kind
+                            {
+                                int foursFound = groupedCards[2].Count;
+                                groupedCards[2].Add(temp4Kind.ToList());
+                                temp4Kind.Clear();
+                            }
+                        }
+                        else
+                        {
+                            //The cards do not match so wipe the lists.
+                            tempPair.Clear();
+                            temp3Kind.Clear();
+                            temp4Kind.Clear();
+                            lastCard = aCard;
+                        }
+                    }
+                }
+
+                return groupedCards;
+            }
+            return null;
         }
     }
 }
