@@ -14,7 +14,7 @@ namespace Poker
         private List<Card> cards;
         private int maxCards;
         //private int handValue = 0;
-        //private string bestHandName = "";
+        private string bestHandName = "";
         private List<Card> bestHand = new List<Card>(5);
         /// <summary>
         /// Creates a hand of cards with a max number of cards it can hold
@@ -24,6 +24,12 @@ namespace Poker
         {
             maxCards = newMaxCards;
             cards = new List<Card>(maxCards);
+        }
+
+        public void clear()
+        {
+            cards.Clear();
+            bestHand.Clear();
         }
         /// <summary>
         /// Returns the number of cards in the hand
@@ -81,16 +87,19 @@ namespace Poker
                     if (bestHand[bestHand.Count - 1].getValue() == Card._ACE && bestHand[bestHand.Count - 2].getValue() == Card._KING) //Are the top two cards the Ace and the King
                     {
                         Console.WriteLine("Player has royal flush!");
+                        bestHandName = "Royal Flush";
                     }
                     else
                     {
                         Console.WriteLine("Player has straight flush!");
+                        bestHandName = "Straight Flush";
                     }
 
                 }
                 else
                 {
                     Console.WriteLine("Player has a flush");
+                    bestHandName = "Flush";
                     bestHand.Sort((a, b) => { return a.getValue().CompareTo(b.getValue()); }); //Sort the besthand based on card value
                     //Get the highest value cards from the flush cards.
                     //The reason I use bestHand.Count - 5 is this will give me the index 5 cards from the end of the list getting me the top 5 valued cards.
@@ -103,13 +112,58 @@ namespace Poker
                 if (hasStraight(cards)) //Check for a straight using all the cards
                 {
                     Console.WriteLine("Has Straight");
+                    bestHandName = "Straight";
                 }
                 else
                 {
                     //Now we group the cards to find 4 of a kind, full house, 3 of a kind and pairs.
                     List<List<List<Card>>> groupedCards = groupCards(); //<-- My first legitimate 3 diamention array :D
+                    if(groupedCards != null)
+                    {
+                        if (groupedCards[2].Count > 0) //if the four of a kind list has anything in it, then we have a four of a kind.
+                        {
+                            Console.WriteLine("Player has 4 of a kind.");
+                            bestHandName = "Four of a Kind";
+                        }
+                        else
+                        {
+                            if (groupedCards[1].Count > 0)//if the three of a kind list has anything in it, then we have a three of a kind.
+                            {
+                                if (groupedCards[0].Count > 1)//Check if the player also has at least 2 pairs as one of the pairs WILL be part of the three of a kind
+                                {
+                                    Console.WriteLine("Player has Full House.");
+                                    bestHandName = "Full House";
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Player has Three of a Kind.");
+                                    bestHandName = "Three of a Kind";
+                                }
+                            }
+                            else
+                            {
+                                switch (groupedCards[0].Count)
+                                {
+                                    case 2:
+                                        Console.WriteLine("Player has 2 pair.");
+                                        bestHandName = "Two Pair";
+                                        break;
+                                    case 1:
+                                        Console.WriteLine("Player has 1 pair.");
+                                        bestHandName = "One Pair";
+                                        break;
+                                    case 0:
+                                        Console.WriteLine("Player has high card.");
+                                        bestHandName = "High Card";
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                    Console.WriteLine("Done");
                 }
             }
+            
         }
         /// <summary>
         /// Check to see if there is a flush in the hand.
@@ -197,7 +251,7 @@ namespace Poker
                 return false;
         }
         /// <summary>
-        /// This method loop through all the cards and places references to each card is arrays is the match a pair, 3 of kind or 4 of kind
+        /// This method loops through all the cards and places references to each card is arrays is the match a pair, 3 of kind or 4 of kind
         /// </summary>
         /// <returns></returns>
         private List<List<List<Card>>> groupCards()
@@ -216,7 +270,8 @@ namespace Poker
                 //How many four of a kind are possible
                 temp = (int)Math.Floor((float)(cards.Count / 4));
                 groupedCards.Add(new List<List<Card>>(temp));
-                
+                bool lastCardUsedInPair = false;
+
                 List<Card> tempPair = new List<Card>(2);
                 List<Card> temp3Kind = new List<Card>(3);
                 List<Card> temp4Kind = new List<Card>(4);
@@ -234,8 +289,16 @@ namespace Poker
                         //If the last card and this card are of the same value then add it to the groups
                         if (lastCard.getValue() == aCard.getValue())
                         {
-                            tempPair.Add(aCard);
-                            tempPair.Add(lastCard);
+                            if (!lastCardUsedInPair) //Was the card used in the last pair. We may get a four of a kind. This ensures the two pairs are seperated instead of getting 3 pairs out of 4 cards.
+                            {
+                                lastCardUsedInPair = true;
+                                tempPair.Add(lastCard);
+                                tempPair.Add(aCard);
+                            }
+                            else
+                            {
+                                lastCardUsedInPair = false;
+                            }
 
                             if (temp3Kind.Count == 0)
                             {
@@ -280,8 +343,10 @@ namespace Poker
                             temp3Kind.Clear();
                             temp4Kind.Clear();
                             lastCard = aCard;
+                            lastCardUsedInPair = false;
                         }
                     }
+                    lastCard = aCard;
                 }
 
                 return groupedCards;
