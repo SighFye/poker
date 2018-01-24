@@ -49,6 +49,14 @@ namespace Poker
             return cards[index];
         }
         /// <summary>
+        /// Returns the best possible 5 card hand from the current cards
+        /// </summary>
+        /// <returns>List containing the best possible hand</returns>
+        public List<Card> getBestHand()
+        {
+            return bestHand;
+        }
+        /// <summary>
         /// Adds a card to the cards array if the cards array's length is not more than maxCards.
         /// </summary>
         /// <param name="newCard">The Card to be added to the cards array</param>
@@ -81,10 +89,10 @@ namespace Poker
                 //Check for straight flush
                 if (hasStraight(bestHand)) //Check for a straight using the flush cards.
                 {
-                    bestHand.Sort((a, b) => { return a.getValue().CompareTo(b.getValue()); }); //Sort the besthand based on card value
+                    bestHand.Sort((card1, card2) => { return card1.cardValue.CompareTo(card2.cardValue); }); //Sort the besthand based on card value
                     bestHand = bestHand.GetRange(bestHand.Count - 5, 5); //We can do a simple getRange because only cards of the same suit are in the bestHand.
                     //Check for Royal flush
-                    if (bestHand[bestHand.Count - 1].getValue() == Card._ACE && bestHand[bestHand.Count - 2].getValue() == Card._KING) //Are the top two cards the Ace and the King
+                    if (bestHand[bestHand.Count - 1].cardValue == Card._ACE && bestHand[bestHand.Count - 2].cardValue == Card._KING) //Are the top two cards the Ace and the King
                     {
                         Console.WriteLine("Player has royal flush!");
                         bestHandName = "Royal Flush";
@@ -100,7 +108,7 @@ namespace Poker
                 {
                     Console.WriteLine("Player has a flush");
                     bestHandName = "Flush";
-                    bestHand.Sort((a, b) => { return a.getValue().CompareTo(b.getValue()); }); //Sort the besthand based on card value
+                    bestHand.Sort((card1, card2) => { return card1.cardValue.CompareTo(card2.cardValue); }); //Sort the besthand based on card value
                     //Get the highest value cards from the flush cards.
                     //The reason I use bestHand.Count - 5 is this will give me the index 5 cards from the end of the list getting me the top 5 valued cards.
                     bestHand = bestHand.GetRange(bestHand.Count - 5, 5);
@@ -172,13 +180,13 @@ namespace Poker
         private bool hasFlush(List<Card> theCards)
         {
             //Sort all the cards based on suit
-            theCards.Sort((a, b) => { return a.getSuit().CompareTo(b.getSuit()); });
+            theCards.Sort((card1, card2) => { return card1.suit.CompareTo(card2.suit); });
             //Loop through the cards and check their suit
-            int lastSuit = 0;
+            Card.Suit lastSuit = 0;
             List<Card> potentialBestHand = new List<Card>(maxCards);
             foreach (Card theCard in theCards)
             {
-                if (lastSuit == theCard.getSuit()) //Does the current cards suit match the last cards suit.
+                if (lastSuit == theCard.suit) //Does the current cards suit match the last cards suit.
                 {
                     potentialBestHand.Add(theCard); //Add the card to the potential besthand cards
                     // We do not need to change lastSuit as this card matches the last
@@ -189,7 +197,7 @@ namespace Poker
                     {
                         potentialBestHand.Clear(); //Get rid of all the cards in the best hand
                         potentialBestHand.Add(theCard); //Add in the current card to be a part of a new best hand.
-                        lastSuit = theCard.getSuit(); //And change the suit to the current cards suit.
+                        lastSuit = theCard.suit; //And change the suit to the current cards suit.
                     }
                 }
             }
@@ -211,21 +219,21 @@ namespace Poker
         private bool hasStraight(List<Card> theCards)
         {
             //Sort all the cards based on card value
-            theCards.Sort((a, b) => { return a.getValue().CompareTo(b.getValue()); });
+            theCards.Sort((card1, card2) => { return card1.cardValue.CompareTo(card2.cardValue); });
             //Loop through the cards and compare their value to the next.
             int lastValue = 0;
             int totalinStraight = 0; //Count how many cards are in the straight
             List<Card> potentialBestHand = new List<Card>(maxCards);
             foreach (Card theCard in theCards)
             {
-                if (lastValue+1 == theCard.getValue() || lastValue == theCard.getValue()) //Does the current cards suit match the last cards suit.
+                if (lastValue + 1 == theCard.cardValue || lastValue == theCard.cardValue) //Does the current cards suit match the last cards suit.
                 {
                     potentialBestHand.Add(theCard); //Add the card to the potential besthand cards
-                    if (lastValue + 1 == theCard.getValue()) //Increase the amount only if the card is greater than the last card.
+                    if (lastValue + 1 == theCard.cardValue) //Increase the amount only if the card is greater than the last card.
                     {
                         totalinStraight += 1;
                     }
-                    lastValue = theCard.getValue();
+                    lastValue = theCard.cardValue;
                     // We do not need to change lastSuit as this card matches the last
                 }
                 else
@@ -234,7 +242,7 @@ namespace Poker
                     {
                         potentialBestHand.Clear(); //Get rid of all the cards in the best hand
                         potentialBestHand.Add(theCard); //Add in the current card to be a part of a new best hand.
-                        lastValue = theCard.getValue(); //And change the suit to the current cards suit.
+                        lastValue = theCard.cardValue; //And change the suit to the current cards suit.
                         totalinStraight = 1;
                     }
                 }
@@ -287,7 +295,7 @@ namespace Poker
                     else
                     {
                         //If the last card and this card are of the same value then add it to the groups
-                        if (lastCard.getValue() == aCard.getValue())
+                        if (lastCard.cardValue == aCard.cardValue)
                         {
                             if (!lastCardUsedInPair) //Was the card used in the last pair. We may get a four of a kind. This ensures the two pairs are seperated instead of getting 3 pairs out of 4 cards.
                             {
